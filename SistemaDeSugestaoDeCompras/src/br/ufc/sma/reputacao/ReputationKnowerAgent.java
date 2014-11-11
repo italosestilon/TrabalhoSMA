@@ -105,7 +105,7 @@ public class ReputationKnowerAgent extends Agent{
 				
 				System.out.println("agente "+agentId+" avaliado");
 				
-				System.out.println("Mapa de reputação");
+				System.out.println("Mapa de reputaÃ§Ã£o");
 				for (Entry<String, Float> entry : reputationMap.entrySet())
 				{
 				    System.out.println(entry.getKey() + "<> " + entry.getValue());
