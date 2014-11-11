@@ -1,5 +1,6 @@
 package br.ufc.sma.reputacao;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
@@ -9,6 +10,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -62,13 +64,28 @@ public class ReputationKnowerAgent extends Agent{
 			ACLMessage msg = myAgent.receive(mt);
 			
 			if(msg != null){
-				String agentId = msg.getContent();
+				
+				@SuppressWarnings("deprecation")
+				AID agentId = new AID(msg.getContent());
 				
 				ACLMessage reply = msg.createReply();
 				
+				Reputation reputacao = null;
+				
 				if(reputationMap.containsKey(agentId)){
+					reputacao = new Reputation(reputationMap.get(agentId), agentId);
+					
 					reply.setPerformative(ACLMessage.INFORM);
-					reply.setContent(String.valueOf(reputationMap.get(agentId)));
+					
+					try {
+						
+						reply.setContentObject((reputacao));
+						
+					} catch (IOException e) {
+						//TODO remover "tratamento" de excecao
+						e.printStackTrace();
+					}
+					
 				}else{
 					reply.setPerformative(ACLMessage.REFUSE);
 					reply.setContent("not-available");

@@ -14,30 +14,41 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- *
- * @author spectrus
- */
-
+@SuppressWarnings("serial")
 public class ReputationAgent extends Agent{
+	
     private Map<AID, Float> reputationMap;
     
+    private Map<AID, Integer> quantidadeDeAvaliacoes;
+    
     protected void setup(){
+    	
         reputationMap = new TreeMap<AID, Float>();
         
+        quantidadeDeAvaliacoes  = new TreeMap<AID, Integer>();
+        
         DFAgentDescription dfd = new DFAgentDescription();
+        
         dfd.setName(getAID());
+        
         ServiceDescription sd = new ServiceDescription();
-        sd.setType("agent-reputation");
-        sd.setName("JADE-book-trading");
+        
+        sd.setType("agent-rating");
+        
+		sd.setName("JADE-Agent-Reputation");
+		
         dfd.addServices(sd);
+        
         try {
             DFService.register(this, dfd);
+            
         } catch (FIPAException fe) {
+        	
             fe.printStackTrace();
         }
         
@@ -47,84 +58,98 @@ public class ReputationAgent extends Agent{
         
     }
     
-    public void printReputations() {
+    
+	private class ReputationRequest extends CyclicBehaviour{
+
+    	public void action() {
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+			
+			ACLMessage msg = myAgent.receive(mt);
+			
+			if(msg != null){
+				
+				@SuppressWarnings("deprecation")
+				AID idAgent = new AID(msg.getContent());
+				
+				ACLMessage reply = msg.createReply();
+				
+				Reputation reputacao = null;
+				
+				if(reputationMap.containsKey(idAgent)){
+					
+					reputacao = new Reputation(reputationMap.get(idAgent), idAgent);
+					
+					quantidadeDeAvaliacoes.put(idAgent,quantidadeDeAvaliacoes.get(idAgent)+1);
+					
+					reply.setPerformative(ACLMessage.INFORM);
+					
+					try {
+						
+						reply.setContentObject((reputacao));
+						
+					} catch (IOException e) {
+						//TODO remover "tratamento" de excecao
+						e.printStackTrace();
+					}
+					
+				}else{
+					reply.setPerformative(ACLMessage.REFUSE);
+					
+					reply.setContent("not-available");
+				}
+				
+				myAgent.send(reply);
+			}else{
+				block();
+			}
+			
+		}
         
     }
     
-    private class ReputationRequest extends CyclicBehaviour{
+  
+	private class ReputationInform extends CyclicBehaviour{
 
         @Override
         public void action() {
-            
-            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
-            ACLMessage msg = myAgent.receive(mt);
-            
-            if(msg != null){
-                
-                String content = msg.getContent();
-                
-                Float reputationValue = (Float) reputationMap.get(content); 
-                ACLMessage reply = msg.createReply();
-                AID id = new AID(msg.getContent());
-                Reputation reputation;
-                
-                if(reputationValue != null){
-                    reputation = new Reputation(reputationValue, id);
-                }else{
-                    reputation = new Reputation(0, id);
-                }
-                
-                try {
-                    reply.setContentObject(reputation);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-                
-                reply.setPerformative(ACLMessage.INFORM);
-                myAgent.send(reply);
-                
-                printReputations();
-            }else{
-                block();
-            }
-            
-        }
-        
-        protected void takeDown(){
-            
-        }
-        
-    }
-    
-    private class ReputationInform extends CyclicBehaviour{
-
-        @Override
-        public void action() {
+        	
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+            
             ACLMessage msg = myAgent.receive(mt);
             
             if(msg != null){
+            	
                 try {
                     Reputation reputation = (Reputation) msg.getContentObject();
+                    
                     float reputationValue = reputation.getReputation();
+                    
                     AID idAgent = reputation.getAgent();
                     
                     Float actualReputation = (Float) reputationMap.get(idAgent.getName());
                     
+                    Integer peso = 0;
+                    
+                    if(quantidadeDeAvaliacoes.containsKey(idAgent)){
+                    	peso = quantidadeDeAvaliacoes.get(idAgent);
+                    }else{
+                    	quantidadeDeAvaliacoes.put(idAgent, 0);
+                    }
+                    
                     if (actualReputation != null) {
-                        reputationValue = (reputationValue + actualReputation) / 2;
+                    	
+                        reputationValue = (reputationValue + (actualReputation * peso)) / peso+1;
                     }
 
                     reputationMap.put(idAgent, reputationValue);
+                    
                 } catch (UnreadableException ex) {
+                	
                     ex.printStackTrace();
                 }
-                
-                
-                
-                
-                printReputations();
+    
             }else{
+            	
                 block();
             }
         }

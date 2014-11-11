@@ -7,12 +7,15 @@ package br.ufc.sma.reputacao;
 import jade.core.AID;
 import jade.util.leap.Serializable;
 
-/**
- *
- * @author spectrus
- */
+
 public class Reputation implements Serializable{
-    private float reputation;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	
+	private float reputation;
     private AID agent;
     
     public Reputation(float reputation, AID agent){
