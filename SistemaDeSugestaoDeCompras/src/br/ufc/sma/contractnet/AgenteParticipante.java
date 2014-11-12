@@ -1,18 +1,17 @@
 package br.ufc.sma.contractnet;
 
 
+import java.io.IOException;
 import java.util.List;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.domain.FIPANames;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.proto.ContractNetResponder;
+import jade.lang.acl.UnreadableException;
 import br.ufc.sma.comportamento.ComportamentoBuscarAgenteDeReputacaoCentralizado;
+import br.ufc.sma.reputacao.Reputation;
 import br.ufc.sma.Cupom;
 
 public class AgenteParticipante extends Agent implements IAgente{
@@ -27,62 +26,126 @@ public class AgenteParticipante extends Agent implements IAgente{
 		if(args.length > 0){
 			lerCuponsDoXML((String) args[0]);
 		}else{
-			System.out.println("Erro nos parâmetros");
+			System.out.println("Erro nos parâmetros!");
 			this.doDelete();
 		}
 		
 		addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));
 		
-		MessageTemplate template = MessageTemplate.and(
-			MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
-			MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+		addBehaviour(new recebimentoDeCFPs());
 		
-		addBehaviour(new ContractNetResponder(this, template){
-			@Override
-			protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+		addBehaviour(new envioAcceptProposal());
+	}
+	
+	private Cupom buscarCupom(String nomeDoCupom) {
+		Cupom cupom = null;
+		for(Cupom c : this.cupons){
+			if(c.getNomeProduto().equals(nomeDoCupom) || c.getTipoProduto().equals(nomeDoCupom)){
+				cupom = c;
+				break;
+			}
+		}
+		return cupom;
+	}
+
+	private boolean reputacaoAceita(Reputation reputacao){
+		return reputacao.getReputation() >= 7;
+	}
+	
+	private void lerCuponsDoXML(String caminhoXML){
+	
+	}
+	
+	private class recebimentoDeCFPs extends CyclicBehaviour {
+		private boolean reputacaoVerificada = false;
+		private Reputation reputacao;
+		@Override
+		public void action() {
+			
+			
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
+			ACLMessage mensagemCFP = myAgent.receive(mt);
+			if(mensagemCFP != null){
 				
-				System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
-				int proposal = evaluateAction();
-				if (proposal > 2) {
-					// We provide a proposal
-					System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
-					ACLMessage propose = cfp.createReply();
-					propose.setPerformative(ACLMessage.PROPOSE);
-					propose.setContent(String.valueOf(proposal));
-					return propose;
+				if(!reputacaoVerificada){
+					ACLMessage msgRequisicaoReputacao = new ACLMessage(ACLMessage.REQUEST);
+					msgRequisicaoReputacao.addReceiver(agenteDeReputacao);
+					
+					try {
+						msgRequisicaoReputacao.setContentObject(mensagemCFP.getSender().getName());
+						send(msgRequisicaoReputacao);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					addBehaviour(new CyclicBehaviour() {
+						
+						@Override
+						public void action(){
+							MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+									MessageTemplate.MatchConversationId("requisicao-de-reputacao"));
+							ACLMessage msgRespostaReputacao = receive(mt);
+							
+							if(msgRespostaReputacao != null){
+								try {
+									Reputation r = (Reputation) msgRespostaReputacao.getContentObject();
+									reputacaoVerificada = true;
+									reputacao = r;
+								} catch (UnreadableException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}else{
+								block();
+							}
+						}
+						
+					});
+				
+				}else if(reputacaoVerificada && reputacaoAceita(reputacao)){
+					String nomeDoCupom = mensagemCFP.getContent();
+					Cupom cupom = buscarCupom(nomeDoCupom);
+					
+					ACLMessage propose = mensagemCFP.createReply();
+					
+					if (cupom != null) {
+						
+						
+						propose.setPerformative(ACLMessage.PROPOSE);
+						try {
+							propose.setContentObject(cupom);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}	
+					}else{
+						propose.setPerformative(ACLMessage.REFUSE);
+						propose.setContent("not-available");
+					}
+					
+					myAgent.send(propose);
 				}
-				else {
-					System.out.println("Agent "+getLocalName()+": Refuse");
-					throw new RefuseException("evaluation-failed");
-				}
+			}else{
+				block();
 			}
-
-			@Override
-			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-				System.out.println("Agent "+getLocalName()+": Proposal accepted");
-				if (performAction()) {
-					System.out.println("Agent "+getLocalName()+": Action successfully performed");
-					ACLMessage inform = accept.createReply();
-					inform.setPerformative(ACLMessage.INFORM);
-					return inform;
-				}
-				else {
-					System.out.println("Agent "+getLocalName()+": Action execution failed");
-					throw new FailureException("unexpected-error");
-				}	
-			}
-
-			protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-				System.out.println("Agent "+getLocalName()+": Proposal rejected");
-			}
-		});
+		}
+		
 	}
-	private int evaluateAction() {
-		return (int) (Math.random() * 10);
-	}
+	
+	private class envioAcceptProposal extends CyclicBehaviour{
 
-	private boolean performAction() {
-		return (Math.random() > 0.2);
+		@Override
+		public void action() {
+			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+			ACLMessage msg = myAgent.receive(mt);
+			
+			if (msg != null) {
+				
+			}else{
+				block();
+			}
+		}
+		
 	}
 	
 	@Override
@@ -95,7 +158,4 @@ public class AgenteParticipante extends Agent implements IAgente{
 		// TODO Auto-generated method stub
 	}
 	
-	private void lerCuponsDoXML(String caminhoXML){
-		
-	}
 }
