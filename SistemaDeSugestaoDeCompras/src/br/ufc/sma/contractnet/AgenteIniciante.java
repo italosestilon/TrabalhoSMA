@@ -21,8 +21,10 @@ import java.util.Enumeration;
 
 
 
-public class AgenteIniciante extends Agent {
+public class AgenteIniciante extends Agent implements IAgente {
 	
+	private final int INTERVALO_BUSCAR_VENDEDOR = 20000;
+	private final int INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO = 100;
 	private List<AID> agentesVendedores;
     private AID agenteDeReputacao;
     
@@ -30,18 +32,19 @@ public class AgenteIniciante extends Agent {
 	protected void setup() { 
 	  	Object[] args = getArguments();
 	  	
-	  	addBehaviour(new TickerBehaviour(this, 100){
+	  	
+		addBehaviour(new TickerBehaviour(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO){
             @Override
             protected void onTick() {
                 DFAgentDescription template = new DFAgentDescription();
                 ServiceDescription sd = new ServiceDescription();
-                sd.setType("agente-reputacao");
+                sd.setType("agente-reputacao-centralizado");
                 template.addServices(sd);
                 try {
                     DFAgentDescription[] result = DFService.search(myAgent, template);
                     if (result.length > 0) {
                         agenteDeReputacao = result[0].getName();
-                        System.out.println("Agente de reputação " + agenteDeReputacao.getName());
+                        System.out.println("Agente de reputacao " + agenteDeReputacao.getName());
                         myAgent.removeBehaviour(this);
                     } else {
                     }
@@ -52,7 +55,7 @@ public class AgenteIniciante extends Agent {
         });
 	  	
 	  	
-	  	addBehaviour(new TickerBehaviour(this, 20000) {
+	  	addBehaviour(new TickerBehaviour(this, INTERVALO_BUSCAR_VENDEDOR) {
 			protected void onTick() {
 				
 				DFAgentDescription template = new DFAgentDescription();
@@ -137,5 +140,19 @@ public class AgenteIniciante extends Agent {
 				System.out.println("Agent "+inform.getSender().getName()+" successfully performed the requested action");
 			}
 		} );
+	}
+
+
+	@Override
+	public void setAgenteDeReputcaoCentralizado(AID agente) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void setAgenteDeReputacao(AID agente) {
+		// TODO Auto-generated method stub
+		
 	} 
 }

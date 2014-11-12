@@ -38,7 +38,7 @@ public class ReputationAgent extends Agent{
         
         ServiceDescription sd = new ServiceDescription();
         
-        sd.setType("agent-rating");
+        sd.setType("agente-reputacao-centralizado");
         
 		sd.setName("JADE-Agent-Reputation");
 		
