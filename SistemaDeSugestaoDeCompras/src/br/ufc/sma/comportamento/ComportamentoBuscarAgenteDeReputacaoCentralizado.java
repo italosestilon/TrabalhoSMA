@@ -8,9 +8,9 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import br.ufc.sma.contractnet.IAgente;
 
-public class ComportamentoBucarAgenteDeReputacaoCentralizado extends TickerBehaviour{
+public class ComportamentoBuscarAgenteDeReputacaoCentralizado extends TickerBehaviour{
 
-	public ComportamentoBucarAgenteDeReputacaoCentralizado(Agent a, long period) {
+	public ComportamentoBuscarAgenteDeReputacaoCentralizado(Agent a, long period) {
 		super(a, period);
 	}
 
