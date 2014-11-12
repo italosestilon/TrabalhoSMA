@@ -1,6 +1,8 @@
 package br.ufc.sma.contractnet;
 
 
+import java.util.List;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPANames;
@@ -10,15 +12,30 @@ import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.ContractNetResponder;
+import br.ufc.sma.comportamento.ComportamentoBuscarAgenteDeReputacaoCentralizado;
+import br.ufc.sma.Cupom;
 
 public class AgenteParticipante extends Agent implements IAgente{
 	
 	private AID agenteDeReputacao;
+	private final int INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO = 100;
+	private List<Cupom> cupons;
 	
 	protected void setup(){
+		
+		Object args[] = getArguments();
+		if(args.length > 0){
+			lerCuponsDoXML((String) args[0]);
+		}else{
+			System.out.println("Erro nos parâmetros");
+			this.doDelete();
+		}
+		
+		addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));
+		
 		MessageTemplate template = MessageTemplate.and(
-		MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
-						MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+			MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+			MessageTemplate.MatchPerformative(ACLMessage.CFP) );
 		
 		addBehaviour(new ContractNetResponder(this, template){
 			@Override
@@ -76,8 +93,9 @@ public class AgenteParticipante extends Agent implements IAgente{
 	@Override
 	public void adicionarAgenteDeReputacao(AID agente) {
 		// TODO Auto-generated method stub
-		
 	}
 	
-	
+	private void lerCuponsDoXML(String caminhoXML){
+		
+	}
 }
