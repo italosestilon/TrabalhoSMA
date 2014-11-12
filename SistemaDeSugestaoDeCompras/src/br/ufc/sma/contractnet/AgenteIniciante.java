@@ -145,14 +145,14 @@ public class AgenteIniciante extends Agent implements IAgente {
 
 	@Override
 	public void setAgenteDeReputcaoCentralizado(AID agente) {
-		// TODO Auto-generated method stub
-		
+		this.agenteDeReputacao = agente;
 	}
 
 
 	@Override
-	public void setAgenteDeReputacao(AID agente) {
+	public void adicionarAgenteDeReputacao(AID agente) {
 		// TODO Auto-generated method stub
-		
-	} 
+	}
+
+
 }
