@@ -17,5 +17,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="libs/jade.jar"/>
+	<classpathentry kind="lib" path="libs/xstream-1.4.7.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

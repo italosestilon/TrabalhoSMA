@@ -26,7 +26,7 @@ public class BuilderCupom {
 		stream.alias("Cupom",Cupom.class);
 	}
 	
-	private List<Cupom> getCupons(){
+	public List<Cupom> getCupons(){
 		
 		return (List<Cupom>)stream.fromXML(arquivo);
 	}

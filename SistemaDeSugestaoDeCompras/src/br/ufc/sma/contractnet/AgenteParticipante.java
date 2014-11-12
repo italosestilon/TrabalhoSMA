@@ -4,19 +4,15 @@ package br.ufc.sma.contractnet;
 import java.io.IOException;
 import java.util.List;
 
-import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import jade.lang.acl.UnreadableException;
 import br.ufc.sma.comportamento.ComportamentoBuscarAgenteDeReputacaoCentralizado;
-import br.ufc.sma.reputacao.Reputation;
+import br.ufc.sma.xml.BuilderCupom;
 import br.ufc.sma.Cupom;
 
-public class AgenteParticipante extends Agent implements IAgente{
-	
-	private AID agenteDeReputacao;
+public class AgenteParticipante extends Agent{
 	private final int INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO = 100;
 	private List<Cupom> cupons;
 	
@@ -32,9 +28,9 @@ public class AgenteParticipante extends Agent implements IAgente{
 		
 		addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));
 		
-		addBehaviour(new recebimentoDeCFPs());
+		addBehaviour(new recebimentoDeCFPs(this));
 		
-		addBehaviour(new envioAcceptProposal());
+		addBehaviour(new envioAcceptProposal(this));
 	}
 	
 	private Cupom buscarCupom(String nomeDoCupom) {
@@ -48,18 +44,17 @@ public class AgenteParticipante extends Agent implements IAgente{
 		return cupom;
 	}
 
-	private boolean reputacaoAceita(Reputation reputacao){
-		return reputacao.getReputation() >= 7;
-	}
 	
 	private void lerCuponsDoXML(String caminhoXML){
-	
+		BuilderCupom builderCupom = new BuilderCupom(caminhoXML);
+		this.cupons = builderCupom.getCupons();
 	}
 	
 	private class recebimentoDeCFPs extends CyclicBehaviour {
-		private boolean reputacaoVerificada = false;
-		private Reputation reputacao;
-		@Override
+		public recebimentoDeCFPs(Agent myAgent) {
+			super(myAgent);
+		}
+		
 		public void action() {
 			
 			
@@ -67,64 +62,27 @@ public class AgenteParticipante extends Agent implements IAgente{
 			ACLMessage mensagemCFP = myAgent.receive(mt);
 			if(mensagemCFP != null){
 				
-				if(!reputacaoVerificada){
-					ACLMessage msgRequisicaoReputacao = new ACLMessage(ACLMessage.REQUEST);
-					msgRequisicaoReputacao.addReceiver(agenteDeReputacao);
+				String nomeDoCupom = mensagemCFP.getContent();
+				Cupom cupom = buscarCupom(nomeDoCupom);
+				
+				ACLMessage propose = mensagemCFP.createReply();
+				
+				if (cupom != null) {
 					
+					
+					propose.setPerformative(ACLMessage.PROPOSE);
 					try {
-						msgRequisicaoReputacao.setContentObject(mensagemCFP.getSender().getName());
-						send(msgRequisicaoReputacao);
+						propose.setContentObject(cupom);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					}
-					addBehaviour(new CyclicBehaviour() {
-						
-						@Override
-						public void action(){
-							MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
-									MessageTemplate.MatchConversationId("requisicao-de-reputacao"));
-							ACLMessage msgRespostaReputacao = receive(mt);
-							
-							if(msgRespostaReputacao != null){
-								try {
-									Reputation r = (Reputation) msgRespostaReputacao.getContentObject();
-									reputacaoVerificada = true;
-									reputacao = r;
-								} catch (UnreadableException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							}else{
-								block();
-							}
-						}
-						
-					});
-				
-				}else if(reputacaoVerificada && reputacaoAceita(reputacao)){
-					String nomeDoCupom = mensagemCFP.getContent();
-					Cupom cupom = buscarCupom(nomeDoCupom);
-					
-					ACLMessage propose = mensagemCFP.createReply();
-					
-					if (cupom != null) {
-						
-						
-						propose.setPerformative(ACLMessage.PROPOSE);
-						try {
-							propose.setContentObject(cupom);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}	
-					}else{
-						propose.setPerformative(ACLMessage.REFUSE);
-						propose.setContent("not-available");
-					}
-					
-					myAgent.send(propose);
+					}	
+				}else{
+					propose.setPerformative(ACLMessage.REFUSE);
+					propose.setContent("not-available");
 				}
+				
+				myAgent.send(propose);
 			}else{
 				block();
 			}
@@ -133,7 +91,10 @@ public class AgenteParticipante extends Agent implements IAgente{
 	}
 	
 	private class envioAcceptProposal extends CyclicBehaviour{
-
+		public envioAcceptProposal(Agent myAgent) {
+			super(myAgent);
+		}
+		
 		@Override
 		public void action() {
 			MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
@@ -146,16 +107,6 @@ public class AgenteParticipante extends Agent implements IAgente{
 			}
 		}
 		
-	}
-	
-	@Override
-	public void setAgenteDeReputcaoCentralizado(AID agente) {
-		this.agenteDeReputacao = agente;
-	}
-	
-	@Override
-	public void adicionarAgenteDeReputacao(AID agente) {
-		// TODO Auto-generated method stub
 	}
 	
 }

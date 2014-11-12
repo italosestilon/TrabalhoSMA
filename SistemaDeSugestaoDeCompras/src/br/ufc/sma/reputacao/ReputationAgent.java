@@ -82,7 +82,7 @@ public class ReputationAgent extends Agent{
 					quantidadeDeAvaliacoes.put(idAgent,quantidadeDeAvaliacoes.get(idAgent)+1);
 					
 					reply.setPerformative(ACLMessage.INFORM);
-					reply.setConversationId("requisicao-de-reputacao");
+					reply.setConversationId("informe-de-reputacao");
 					
 					try {
 						
