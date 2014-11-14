@@ -68,6 +68,10 @@ public class BookBuyerAgent extends Agent {
 			doDelete();
 		}
 	}
+	
+	public Iterable<Cupom> getCupons(){
+		return propostasBoas.values();
+	}
 
 	protected void takeDown() {
 		System.out.println("Agente comprador "+getAID().getName()+" finalizado.");
