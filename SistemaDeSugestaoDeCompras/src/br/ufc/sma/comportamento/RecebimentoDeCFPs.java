@@ -20,7 +20,8 @@ public class RecebimentoDeCFPs extends CyclicBehaviour {
 	public void action() {
 		
 		
-		MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
+		MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
+											MessageTemplate.MatchConversationId("venda-cupom"));
 		ACLMessage mensagemCFP = myAgent.receive(mt);
 	 	if(mensagemCFP != null){
 			
@@ -28,9 +29,10 @@ public class RecebimentoDeCFPs extends CyclicBehaviour {
 			Cupom cupom = agente.buscarCupom(nomeDoCupom);
 			
 			ACLMessage propose = mensagemCFP.createReply();
-			
+			propose.setConversationId("venda-cupom");
 			if (cupom != null) {
 				propose.setPerformative(ACLMessage.PROPOSE);
+				
 				try {
 					propose.setContentObject(cupom);
 				} catch (IOException e) {

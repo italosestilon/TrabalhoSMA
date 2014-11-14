@@ -88,7 +88,7 @@ public class BookBuyerAgent extends Agent {
 
 				cfp.setContent(targetBookTitle);
 
-				cfp.setConversationId("book-trade");
+				cfp.setConversationId("venda-cupom");
 
 				cfp.setReplyWith("cfp"+System.currentTimeMillis()); // valor unico
 
@@ -154,7 +154,7 @@ public class BookBuyerAgent extends Agent {
 				ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
 				order.addReceiver(bestSeller);
 				order.setContent(targetBookTitle);
-				order.setConversationId("book-trade");
+				order.setConversationId("venda-cupom");
 				order.setReplyWith("order"+System.currentTimeMillis());
 				myAgent.send(order);
 				// preparando o template para receber a resposta
