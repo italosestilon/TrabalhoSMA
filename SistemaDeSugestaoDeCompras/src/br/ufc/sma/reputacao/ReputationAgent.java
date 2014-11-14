@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package br.ufc.sma.reputacao;
 
 import jade.core.AID;
@@ -114,7 +110,7 @@ public class ReputationAgent extends Agent{
         @Override
         public void action() {
         	
-            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+            MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchConversationId("informe-reputacao"), MessageTemplate.MatchPerformative(ACLMessage.INFORM));
             
             ACLMessage msg = myAgent.receive(mt);
             

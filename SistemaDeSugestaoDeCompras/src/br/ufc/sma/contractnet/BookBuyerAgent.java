@@ -1,5 +1,3 @@
-
-
 package br.ufc.sma.contractnet;
 
 import jade.core.AID;
@@ -16,7 +14,9 @@ import jade.lang.acl.UnreadableException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import br.ufc.sma.Cupom;
 import br.ufc.sma.Preferencia;
@@ -27,15 +27,26 @@ public class BookBuyerAgent extends Agent {
 
 	private String targetBookTitle;
 
-
 	private static final int INTERVALO_ENVIAR_MENSAGEM = 2000;
+
 	private final int INTERVALO_BUSCAR_VENDEDOR = 20000;
+
 	private final int INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO = 100;
+
 	private List<AID> agentesVendedores;
+
 	private AID agenteDeReputacao;
-	private Preferencia preferencia;
+
+	private Map<String, Preferencia> preferencias;
+
+	private Map<AID,Cupom> propostasBoas;
 
 	protected void setup() {
+
+		propostasBoas = new HashMap<AID, Cupom>();
+		
+		preferencias = new HashMap<String, Preferencia>();
+
 		System.out.println("Olá! O agente comprador "+getAID().getName()+" está pronto.");
 
 		// Recebe o titulo do livro a ser comprado
@@ -67,49 +78,136 @@ public class BookBuyerAgent extends Agent {
 	 * Comportamento usado pelo comprador para encontrar vendedores do livro procurado
 	 */
 	private class RequestPerformer extends Behaviour {
-		private AID bestSeller; // Agente com melhor reputação
-		private float bestReputation;  // Melhor preço
 		private int repliesCnt = 0; // Número de respostas de vendedores
+
 		private int repliesReputation = 0;
+
+		private int qtdPropostasPreAceitas = 0; //Propostas para analisar a reputacao do vendedor
+
 		private MessageTemplate mt; // Template para receber respostas
+
 		private MessageTemplate mtReputation;
+
+		private Cupom cupomEscolhido = null;
+
 		private int step = 0;
 
 		public void action() {
 			switch (step) {
 			case 0:
 				// Envia a cfp (call for proposals) para todos os vendedores
-				ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-
-				for (int i = 0; i < agentesVendedores.size(); ++i) {
-
-					cfp.addReceiver(agentesVendedores.get(i));
-				} 
-
-				cfp.setContent(targetBookTitle);
-
-				cfp.setConversationId("venda-cupom");
-
-				cfp.setReplyWith("cfp"+System.currentTimeMillis()); // valor unico
-
-				myAgent.send(cfp);
-
-				// Prepara o template para receber propostas
-				mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE),
-						MessageTemplate.and(MessageTemplate.MatchConversationId("venda-cupom"),
-								MessageTemplate.MatchInReplyTo(cfp.getReplyWith())));
-
-				step = 1;
+				passoEnviarCFP();
 
 				break;
 
 			case 1:
 				// Recebe todas as propostas/rejeições dos agentes vendedores
-				
-				//TODO analisar respostas recebida
-				ACLMessage reply = myAgent.receive(mt);
 
-				if (reply != null) {
+				//TODO analisar respostas recebida
+				passoAnalisarPropostas();
+
+				break;
+
+			case 2:
+				// Recebe resposta do Reputation Agent
+				passoAnalisarProposta();
+
+				break;
+			case 3:
+				//TODO esperando a resposta da tela
+				passoEnviarMensagemDeCompra();
+
+
+				break;
+
+			case 4:
+
+				PassoAvaliarVendedor();
+				break;
+			}
+
+		}
+
+		private void PassoAvaliarVendedor() {
+			ACLMessage reply = myAgent.receive(mt);
+
+			if (reply != null) {
+
+
+				// Compra realizada
+				System.out.println(targetBookTitle+" foi comprado com sucesso do agente "+reply.getSender().getName());
+
+				ACLMessage informReputation = new ACLMessage();
+
+				Reputation reputation = new Reputation(10, cupomEscolhido.getVendedor());
+				try {
+					informReputation.setContentObject(reputation);
+					informReputation.setPerformative(ACLMessage.INFORM);
+					informReputation.addReceiver(agenteDeReputacao);
+					informReputation.setConversationId("informe-reputacao");
+					myAgent.send(informReputation);
+
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+
+				myAgent.doDelete();
+
+
+
+				step = 5;
+			}
+			else {
+				block();
+			}
+		}
+
+		private void passoEnviarMensagemDeCompra() {
+			ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+
+			order.addReceiver(cupomEscolhido.getVendedor());
+
+			try {
+				order.setContentObject(cupomEscolhido);
+
+				order.setConversationId("venda-cupom");
+
+				order.setReplyWith("order"+System.currentTimeMillis());
+
+				myAgent.send(order);
+				// preparando o template para receber a resposta
+				mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+						MessageTemplate.and(MessageTemplate.MatchConversationId("venda-cupom"),
+								MessageTemplate.MatchInReplyTo(order.getReplyWith())));
+
+				step = 4;
+
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		private void passoAnalisarPropostas() {
+			ACLMessage reply = myAgent.receive(mt);
+
+			if (reply != null) {
+
+				Cupom cupom = null;
+
+				try {
+					cupom = (Cupom)reply.getContentObject();
+				} catch (UnreadableException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				if(cupom != null && avaliarProposta(cupom)){
+
+					propostasBoas.put(cupom.getVendedor(), cupom);
+
+					qtdPropostasPreAceitas++;
 
 					ACLMessage requestReputation = new ACLMessage();
 
@@ -127,73 +225,48 @@ public class BookBuyerAgent extends Agent {
 
 					mtReputation = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
 							MessageTemplate.MatchConversationId("informe-de-reputacao"));
-
-
-					repliesCnt++;
-					
-					if (repliesCnt >= agentesVendedores.size()) {
-						//Não há mais vendedores
-						step = 2; 
-					}
 				}
+
+
+				repliesCnt++;
+
+				if (repliesCnt >= agentesVendedores.size()) {
+					//Não há mais vendedores
+					step = 2; 
+				}
+			}
+
+			else {
+
+				block();
+			}
+		}
+
+		private void passoEnviarCFP() {
+			
+			for (Preferencia preferencia : preferencias.values()){
 				
-				else {
-					
-					block();
-				}
+				ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+
+				for (int i = 0; i < agentesVendedores.size(); ++i) {
+
+					cfp.addReceiver(agentesVendedores.get(i));
+				} 
+
+				cfp.setContent(preferencia.getTipo());
+
+				cfp.setConversationId("venda-cupom");
+
+				cfp.setReplyWith("cfp"+System.currentTimeMillis()); // valor unico
+
+				myAgent.send(cfp);
 				
-				break;
-				
-			case 2:
-				// Recebe resposta do Reputation Agent
-				passoAnalisarProposta();
+				mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE),
+						MessageTemplate.and(MessageTemplate.MatchConversationId("venda-cupom"),
+								MessageTemplate.MatchInReplyTo(cfp.getReplyWith())));
+			}
 
-				break;
-			case 3:
-				// Envia mensagem para o vendedor com melhor valor
-				ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-				order.addReceiver(bestSeller);
-				order.setContent(targetBookTitle);
-				order.setConversationId("venda-cupom");
-				order.setReplyWith("order"+System.currentTimeMillis());
-				myAgent.send(order);
-				// preparando o template para receber a resposta
-				mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
-						MessageTemplate.MatchInReplyTo(order.getReplyWith()));
-				step = 4;
-				break;
-			case 4:      
-				reply = myAgent.receive(mt);
-				if (reply != null) {
-					if (reply.getPerformative() == ACLMessage.INFORM) {
-						// Compra realizada
-						System.out.println(targetBookTitle+" foi comprado com sucesso do agente "+reply.getSender().getName());
-						System.out.println("Reputação = "+bestReputation);
-
-						ACLMessage informReputation = new ACLMessage();
-						
-						Reputation reputation = new Reputation(10, bestSeller);
-						try {
-							informReputation.setContentObject(reputation);
-							informReputation.setPerformative(ACLMessage.INFORM);
-							informReputation.addReceiver(agenteDeReputacao);
-							myAgent.send(informReputation);
-						} catch (IOException ex) {
-							ex.printStackTrace();
-						}
-						myAgent.doDelete();
-					}
-					else {
-						System.out.println("Falha: O livro já foi vendido.");
-					}
-
-					step = 5;
-				}
-				else {
-					block();
-				}
-				break;
-			}        
+			step = 1;
 		}
 
 		private void passoAnalisarProposta() {
@@ -203,16 +276,17 @@ public class BookBuyerAgent extends Agent {
 
 
 				try {
-					
+
 					Reputation reputation = (Reputation) replyReputation.getContentObject();
-					
+
 					float reputationValue = reputation.getReputation();
 
+					Cupom cupom = propostasBoas.get(reputation.getAgent());
+
 					//Logica de calcular melhor cupom e melhor jogador
-					if (avaliacaoDeMelhorVendedor(reputation, cupom)) {
-						// Melhor oferta até o momento
-						bestReputation = reputationValue;
-						bestSeller = reputation.getAgent();
+					if (!avaliarReputacao(reputation )) {
+						//Remove o cupom do mapa
+						propostasBoas.remove(reputation.getAgent());
 					}
 				} catch (UnreadableException ex) {
 					ex.printStackTrace();
@@ -221,7 +295,7 @@ public class BookBuyerAgent extends Agent {
 
 				repliesReputation++;
 
-				if(repliesReputation >= agentesVendedores.size()){
+				if(repliesReputation >= qtdPropostasPreAceitas){
 					step = 3;
 				}
 
@@ -231,15 +305,35 @@ public class BookBuyerAgent extends Agent {
 		}
 
 		public boolean done() {
-			if (step == 3 && bestSeller == null) {
+			if (step == 3) {
 				System.out.println("Falha: "+targetBookTitle+" não encontrado para vender");
 			}
-			return ((step == 3 && bestSeller == null) || step == 5);
+			return (step == 3 || step == 5);
 		}
 
-		private boolean avaliacaoDeMelhorVendedor(Reputation reputacao, Cupom cupom){
+		private boolean avaliarReputacao(Reputation reputacao){
 			//TODO implementar
-			return true;
+			if(reputacao.getReputation() >= 7){
+				return true;
+			}else{
+				return false;
+			}
+		}
+
+		private boolean avaliarProposta(Cupom cupom){
+
+			if(cupom != null){
+				Preferencia preferencia = preferencias.get(cupom.getTipoProduto());
+				if(cupom.getPrecoProduto() >= preferencia.getPreco() && !cupom.getData().before(preferencia.getDataDeInicio()) 
+						&& !cupom.getData().after(preferencia.getDataDeFim())){
+					return true;
+				}else{
+					return false;
+				}
+			}else{
+				return false;
+			}
+
 		}
 	}
 
