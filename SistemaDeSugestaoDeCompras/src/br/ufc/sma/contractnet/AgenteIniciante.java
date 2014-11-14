@@ -14,6 +14,7 @@ import jade.lang.acl.UnreadableException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class AgenteIniciante extends Agent {
 		}
 	}
 	
-	public Iterable<Cupom> getCupons(){
+	public Collection<Cupom> getCupons(){
 		return propostasBoas.values();
 	}
 
