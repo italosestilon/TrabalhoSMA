@@ -34,7 +34,7 @@ public class AgenteParticipante extends Agent{
 	public Cupom buscarCupom(String nomeDoCupom) {
 		Cupom cupom = null;
 		for(Cupom c : this.cupons){
-			if(c.getNomeProduto().equals(nomeDoCupom) || c.getTipoProduto().equals(nomeDoCupom)){
+			if(c.getNomeProduto().equalsIgnoreCase(nomeDoCupom) || c.getTipoProduto().equalsIgnoreCase(nomeDoCupom)){
 				cupom = c;
 				break;
 			}
