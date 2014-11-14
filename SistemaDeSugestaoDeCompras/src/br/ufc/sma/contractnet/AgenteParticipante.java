@@ -56,7 +56,7 @@ public class AgenteParticipante extends Agent{
 		return false;
 	}
 	
-	public void comprarCupom(){
+	public void comprarCupom(Cupom cupom){
 		
 	}
 	
