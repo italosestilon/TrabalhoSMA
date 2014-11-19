@@ -1,14 +1,16 @@
 package br.ufc.sma.contractnet;
 
 
+import jade.core.Agent;
+
 import java.util.List;
 
-import jade.core.Agent;
+import br.ufc.sma.Cupom;
 import br.ufc.sma.comportamento.ComportamentoBuscarAgenteDeReputacaoCentralizado;
 import br.ufc.sma.comportamento.EnvioAcceptProposal;
 import br.ufc.sma.comportamento.RecebimentoDeCFPs;
-import br.ufc.sma.xml.BuilderCupom;
-import br.ufc.sma.Cupom;
+import br.ufc.sma.xml.BuilderTeste;
+import br.ufc.sma.xml.IBuilderCupom;
 
 public class AgenteParticipante extends Agent{
 	private final int INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO = 100;
@@ -43,7 +45,7 @@ public class AgenteParticipante extends Agent{
 	}
 	
 	private void lerCuponsDoXML(String caminhoXML){
-		BuilderCupom builderCupom = new BuilderCupom(caminhoXML);
+		IBuilderCupom builderCupom = new BuilderTeste();
 		this.cupons = builderCupom.getCupons();
 	}
 	

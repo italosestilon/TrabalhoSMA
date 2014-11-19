@@ -8,7 +8,7 @@ import br.ufc.sma.Cupom;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
-public class BuilderCupom {
+public class BuilderCupom implements IBuilderCupom{
 	
 	private XStream stream;
 	private File arquivo;

@@ -8,12 +8,18 @@ public class Preferencia implements Serializable{
 
 	private String tipo;
 	
-	private Double preco;
+	private double preco;
 	
 	private Calendar dataDeInicio;
 	
 	private Calendar dataDeFim;
-
+	
+	public Preferencia(String tipo, double preco, Calendar dataDeInicio, Calendar dataDeFim) {
+		this.tipo = tipo;
+		this.preco = preco;
+		this.dataDeInicio = dataDeInicio;
+		this.dataDeFim = dataDeFim;
+	}
 	public Calendar getDataDeInicio() {
 		return dataDeInicio;
 	}
@@ -22,7 +28,7 @@ public class Preferencia implements Serializable{
 		return this.dataDeFim;
 	}
 
-	public Double getPreco() {
+	public double getPreco() {
 		return preco;
 	}
 

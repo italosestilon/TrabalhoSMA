@@ -23,6 +23,8 @@ import br.ufc.sma.Cupom;
 import br.ufc.sma.Preferencia;
 import br.ufc.sma.comportamento.ComportamentoBuscarAgenteDeReputacaoCentralizado;
 import br.ufc.sma.reputacao.Reputation;
+import br.ufc.sma.xml.BuiderPerefernciaTeste;
+import br.ufc.sma.xml.IBuiderPeferencia;
 
 public class AgenteIniciante extends Agent {
 
@@ -46,7 +48,7 @@ public class AgenteIniciante extends Agent {
 
 		propostasBoas = new HashMap<AID, Cupom>();
 		
-		preferencias = new HashMap<String, Preferencia>();
+		pegarPreferencias();
 
 		System.out.println("Olá! O agente comprador "+getAID().getName()+" está pronto.");
 
@@ -68,6 +70,13 @@ public class AgenteIniciante extends Agent {
 			System.out.println("Nenhum livro informado");
 			doDelete();
 		}
+	}
+
+	private void pegarPreferencias() {
+		
+		IBuiderPeferencia construtor = new BuiderPerefernciaTeste();
+		
+		preferencias = construtor.getPrefencias();
 	}
 	
 	public Collection<Cupom> getCupons(){
