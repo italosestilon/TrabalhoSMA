@@ -17,7 +17,7 @@ public class BuilderPreferencia implements IBuiderPeferencia{
 		
 		configurarStream();
 		
-		arquivo = new File(caminhoDoArquivo);
+		arquivo = new File("xml/"+caminhoDoArquivo);
 	}
 	
 	private void configurarStream(){

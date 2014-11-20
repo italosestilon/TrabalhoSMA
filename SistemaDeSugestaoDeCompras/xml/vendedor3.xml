@@ -1,10 +1,12 @@
 <List><br.ufc.sma.Cupom>
+
     <nomeProduto>Playstation 4 com Fifa 15</nomeProduto>
-    <precoProduto>1.599</precoProduto>
+    <precoProduto>1599.0</precoProduto>
     <data>
-      <time>1417495568647</time>
+      <time>1418449192253</time>
       <timezone>America/Cayenne</timezone>
     </data>
     <tipoProduto>eletronico</tipoProduto>
     <id>3</id>
+ 
   </br.ufc.sma.Cupom></List>

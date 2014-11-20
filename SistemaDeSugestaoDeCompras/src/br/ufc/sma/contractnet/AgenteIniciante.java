@@ -56,7 +56,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 		propostasBoas = new HashMap<String, Cupom>();
 		
 
-		System.out.println("OlÃ¡! O agente "+getAID().getName()+" estÃ¡ pronto para buscar cupons.");
+		System.out.println("Olá! O agente "+getAID().getName()+" está pronto para buscar cupons.");
 
 	
 		addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));         
@@ -78,7 +78,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 	}
 
 	protected void takeDown() {
-		System.out.println("Agente "+getAID().getName()+" jÃ¡ esgotou suas preferÃªncias e serÃ¡ finalizada.");
+		System.out.println("Agente "+getAID().getName()+" já esgotou suas preferências e será finalizada.");
 	}
 
 	/*
@@ -87,7 +87,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 	 */
 	private class RequestPerformer extends Behaviour {
 		
-		private int repliesCnt = 0; // NÃºmero de respostas de vendedores
+		private int repliesCnt = 0; // Número de respostas de vendedores
 		
 		private List<AID> agentesVendedoresNovos; 
 
@@ -319,7 +319,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 			
 			if(replyInform != null){
 				
-				System.out.println(myAgent.getLocalName()+" Analisando reputaÃ§Ã£o");
+				System.out.println(myAgent.getLocalName()+" Analisando reputação");
 				try {
 					Reputation reputation = (Reputation) replyInform.getContentObject();
 
@@ -363,7 +363,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 		}
 
 		private boolean avaliarProposta(Cupom cupom){
-
+			System.out.println("passou aqui");
 			if(cupom != null){
 				Preferencia preferencia = preferencias.get(cupom.getTipoProduto());
 				if(cupom.getPrecoProduto() <= preferencia.getPreco() && !cupom.getData().before(preferencia.getDataDeInicio()) 

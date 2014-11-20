@@ -17,7 +17,7 @@ public class BuilderCupom implements IBuilderCupom{
 		
 		configurarStream();
 		
-		arquivo = new File(caminhoDoArquivo);
+		arquivo = new File("xml/"+caminhoDoArquivo);
 	}
 	
 	private void configurarStream(){

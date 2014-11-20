@@ -5,11 +5,11 @@
       <tipo>teatro</tipo>
       <preco>80.0</preco>
       <dataDeInicio>
-        <time>1418358775872</time>
+        <time>1392185707406</time>
         <timezone>America/Cayenne</timezone>
       </dataDeInicio>
       <dataDeFim>
-        <time>1419309175872</time>
+        <time>1392704107406</time>
         <timezone>America/Cayenne</timezone>
       </dataDeFim>
     </br.ufc.sma.Preferencia>
@@ -17,19 +17,20 @@
   <entry>
     <string>eletronico</string>
     <br.ufc.sma.Preferencia>
-      <tipo>eletronico</tipo>
-      <preco>1400.0</preco>
-      <dataDeInicio reference="../../../entry/br.ufc.sma.Preferencia/dataDeInicio"/>
-      <dataDeFim reference="../../../entry/br.ufc.sma.Preferencia/dataDeFim"/>
+      <tipo>show</tipo>
+      <preco>100.0</preco>
+      <dataDeInicio>
+        <time>1416636907406</time>
+        <timezone>America/Cayenne</timezone>
+      </dataDeInicio>
+      <dataDeFim>
+        <time>1418192107406</time>
+        <timezone>America/Cayenne</timezone>
+      </dataDeFim>
     </br.ufc.sma.Preferencia>
   </entry>
   <entry>
     <string>show</string>
-    <br.ufc.sma.Preferencia>
-      <tipo>show</tipo>
-      <preco>100.0</preco>
-      <dataDeInicio reference="../../../entry/br.ufc.sma.Preferencia/dataDeInicio"/>
-      <dataDeFim reference="../../../entry/br.ufc.sma.Preferencia/dataDeFim"/>
-    </br.ufc.sma.Preferencia>
+    <br.ufc.sma.Preferencia reference="../../entry[2]/br.ufc.sma.Preferencia"/>
   </entry>
 </map>
