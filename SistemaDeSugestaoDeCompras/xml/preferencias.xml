@@ -1,0 +1,35 @@
+<map>
+  <entry>
+    <string>teatro</string>
+    <br.ufc.sma.Preferencia>
+      <tipo>teatro</tipo>
+      <preco>80.0</preco>
+      <dataDeInicio>
+        <time>1418358775872</time>
+        <timezone>America/Cayenne</timezone>
+      </dataDeInicio>
+      <dataDeFim>
+        <time>1419309175872</time>
+        <timezone>America/Cayenne</timezone>
+      </dataDeFim>
+    </br.ufc.sma.Preferencia>
+  </entry>
+  <entry>
+    <string>eletronico</string>
+    <br.ufc.sma.Preferencia>
+      <tipo>eletronico</tipo>
+      <preco>1400.0</preco>
+      <dataDeInicio reference="../../../entry/br.ufc.sma.Preferencia/dataDeInicio"/>
+      <dataDeFim reference="../../../entry/br.ufc.sma.Preferencia/dataDeFim"/>
+    </br.ufc.sma.Preferencia>
+  </entry>
+  <entry>
+    <string>show</string>
+    <br.ufc.sma.Preferencia>
+      <tipo>show</tipo>
+      <preco>100.0</preco>
+      <dataDeInicio reference="../../../entry/br.ufc.sma.Preferencia/dataDeInicio"/>
+      <dataDeFim reference="../../../entry/br.ufc.sma.Preferencia/dataDeFim"/>
+    </br.ufc.sma.Preferencia>
+  </entry>
+</map>

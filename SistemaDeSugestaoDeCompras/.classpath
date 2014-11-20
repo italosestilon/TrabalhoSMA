@@ -16,7 +16,5 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/BancoImobiliario/lib/xstream-1.4.7.jar"/>
-	<classpathentry kind="lib" path="/media/spectrus/66C4933514527A23/JADE/jade/lib/jade.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

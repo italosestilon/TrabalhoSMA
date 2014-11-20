@@ -4,14 +4,15 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
+import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -140,6 +141,20 @@ public class ReputationAgent extends Agent{
                     }
 
                     reputationMap.put(idAgent, reputationValue);
+                    
+                    
+                    for(Iterator<AID> iterador = reputationMap.keySet().iterator(); iterador.hasNext();){
+                    	AID aux = iterador.next();
+                    	System.out.println("Agente = "+aux.getLocalName()+" reputacao = "+reputationMap.get(aux));
+                    }
+                    
+                    while(reputationMap.keySet().iterator().hasNext()){
+                    	
+                    	
+                    	
+                    }
+                    
+                    
                     
                 } catch (UnreadableException ex) {
                 	

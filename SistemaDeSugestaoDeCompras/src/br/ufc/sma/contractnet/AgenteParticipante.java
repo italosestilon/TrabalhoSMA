@@ -2,7 +2,7 @@ package br.ufc.sma.contractnet;
 
 
 import jade.core.AID;
-import jade.core.Agent; 
+import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -16,7 +16,7 @@ import java.util.TreeMap;
 import br.ufc.sma.Cupom;
 import br.ufc.sma.comportamento.EnvioAcceptProposal;
 import br.ufc.sma.comportamento.RecebimentoDeCFPs;
-import br.ufc.sma.xml.BuilderTeste;
+import br.ufc.sma.xml.BuilderCupom;
 import br.ufc.sma.xml.IBuilderCupom;
 
 public class AgenteParticipante extends Agent{
@@ -57,7 +57,7 @@ public class AgenteParticipante extends Agent{
 	}
 	
 	private void lerCuponsDoXML(String caminhoXML){
-		IBuilderCupom builderCupom = new BuilderTeste();
+		IBuilderCupom builderCupom = new BuilderCupom(caminhoXML);
 		this.cupons = builderCupom.getCupons();
 		for(Cupom cupom : cupons){
 			cupom.setVendedor(getAID());

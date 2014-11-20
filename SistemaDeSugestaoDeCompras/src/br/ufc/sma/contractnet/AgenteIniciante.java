@@ -23,7 +23,7 @@ import br.ufc.sma.Cupom;
 import br.ufc.sma.Preferencia;
 import br.ufc.sma.comportamento.ComportamentoBuscarAgenteDeReputacaoCentralizado;
 import br.ufc.sma.reputacao.Reputation;
-import br.ufc.sma.xml.BuiderPerefernciaTeste;
+import br.ufc.sma.xml.BuilderPreferencia;
 import br.ufc.sma.xml.IBuiderPeferencia;
 
 public class AgenteIniciante extends Agent implements IAgente{
@@ -44,11 +44,17 @@ public class AgenteIniciante extends Agent implements IAgente{
 	private Map<String,Cupom> propostasBoas;
 
 	protected void setup() {
+		
+		Object args[] = getArguments();
+		if(args.length > 0){
+			pegarPreferencias(((String) args[0]));
+		}else{
+			this.doDelete();
+		}
 
 		agentesVendedores = new ArrayList<AID>(); 
 		propostasBoas = new HashMap<String, Cupom>();
 		
-		pegarPreferencias();
 
 		System.out.println("Olá! O agente "+getAID().getName()+" está pronto para buscar cupons.");
 
@@ -60,9 +66,9 @@ public class AgenteIniciante extends Agent implements IAgente{
 		
 	}
 
-	private void pegarPreferencias() {
+	private void pegarPreferencias(String caminhoDoArquivo) {
 		
-		IBuiderPeferencia construtor = new BuiderPerefernciaTeste();
+		IBuiderPeferencia construtor = new BuilderPreferencia(caminhoDoArquivo);
 		
 		preferencias = construtor.getPrefencias();
 	}
