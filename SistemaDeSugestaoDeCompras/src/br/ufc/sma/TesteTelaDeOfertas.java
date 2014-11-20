@@ -18,7 +18,7 @@ public class TesteTelaDeOfertas {
 		
 		
 		for(int i =0; i <= 10; i++){
-			cupons.add(new Cupom("viagem para",45.0,calendar,"viagem"));
+			cupons.add(new Cupom("viagem para",45.0,calendar,"viagem", i));
 		}
 		
 		TelaAvaliacaoDeOfertas tela = new TelaAvaliacaoDeOfertas(cupons);

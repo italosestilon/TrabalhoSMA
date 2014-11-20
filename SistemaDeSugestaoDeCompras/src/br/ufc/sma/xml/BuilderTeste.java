@@ -21,7 +21,7 @@ public class BuilderTeste implements IBuilderCupom{
 		try {
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(formato.parse("31/12/2014"));
-			cupons.add(new Cupom("New York", 400.0, calendar, "viagem"));
+			cupons.add(new Cupom("New York", 400.0, calendar, "viagem", 1));
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -30,7 +30,7 @@ public class BuilderTeste implements IBuilderCupom{
 		try {
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(formato.parse("30/12/2014"));
-			cupons.add(new Cupom("New York", 450.0, calendar, "viagem"));
+			cupons.add(new Cupom("New York", 450.0, calendar, "viagem", 2));
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -41,7 +41,7 @@ public class BuilderTeste implements IBuilderCupom{
 		try {
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(formato.parse("29/12/2014"));
-			cupons.add(new Cupom("New York", 550.0, calendar, "viagem"));
+			cupons.add(new Cupom("New York", 550.0, calendar, "viagem", 3));
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

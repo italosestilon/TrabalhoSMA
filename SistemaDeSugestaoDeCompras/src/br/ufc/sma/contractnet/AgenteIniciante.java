@@ -26,9 +26,8 @@ import br.ufc.sma.reputacao.Reputation;
 import br.ufc.sma.xml.BuiderPerefernciaTeste;
 import br.ufc.sma.xml.IBuiderPeferencia;
 
-public class AgenteIniciante extends Agent {
+public class AgenteIniciante extends Agent implements IAgente{
 
-	private String targetBookTitle;
 
 	private static final int INTERVALO_ENVIAR_MENSAGEM = 2000;
 
@@ -42,34 +41,23 @@ public class AgenteIniciante extends Agent {
 
 	private Map<String, Preferencia> preferencias;
 
-	private Map<AID,Cupom> propostasBoas;
+	private Map<String,Cupom> propostasBoas;
 
 	protected void setup() {
 
-		propostasBoas = new HashMap<AID, Cupom>();
+		agentesVendedores = new ArrayList<AID>(); 
+		propostasBoas = new HashMap<String, Cupom>();
 		
 		pegarPreferencias();
 
-		System.out.println("Olá! O agente comprador "+getAID().getName()+" está pronto.");
+		System.out.println("Olá! O agente "+getAID().getName()+" está pronto para buscar cupons.");
 
-		// Recebe o titulo do livro a ser comprado
-		Object[] args = getArguments();
-		if (args != null && args.length > 0) {
+	
+		addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));         
 
-			targetBookTitle = (String) args[0];
-
-			System.out.println("O livro a ser comprado é "+targetBookTitle);
-
-			addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));         
-
-			// TickerBehaviour para enviar um request a cada minuto
-			addBehaviour(new BuscarVendedoresDeCupons(this, INTERVALO_BUSCAR_VENDEDOR));
-		}
-		else {
-			// Finaliza o Agente
-			System.out.println("Nenhum livro informado");
-			doDelete();
-		}
+		// TickerBehaviour para enviar um request a cada minuto
+		addBehaviour(new BuscarVendedoresDeCupons(this, INTERVALO_BUSCAR_VENDEDOR));
+		
 	}
 
 	private void pegarPreferencias() {
@@ -84,7 +72,7 @@ public class AgenteIniciante extends Agent {
 	}
 
 	protected void takeDown() {
-		System.out.println("Agente comprador "+getAID().getName()+" finalizado.");
+		System.out.println("Agente "+getAID().getName()+" já esgotou suas preferências.");
 	}
 
 	/*
@@ -92,68 +80,85 @@ public class AgenteIniciante extends Agent {
 	 * Comportamento usado pelo comprador para encontrar vendedores do livro procurado
 	 */
 	private class RequestPerformer extends Behaviour {
+		
 		private int repliesCnt = 0; // Número de respostas de vendedores
+		
+		private List<AID> agentesVendedoresNovos; 
 
 		private int repliesReputation = 0;
+		
+		private int repliesCompra = 0;
 
 		private int qtdPropostasPreAceitas = 0; //Propostas para analisar a reputacao do vendedor
 
 		private MessageTemplate mt; // Template para receber respostas
 
-		private MessageTemplate mtReputation;
-
-		private Cupom cupomEscolhido = null;
 
 		private int step = 0;
 
+		public RequestPerformer(Agent a, List<AID> agentesVendedoresNovos){
+			super(a);
+			this.agentesVendedoresNovos = agentesVendedoresNovos;
+		}
+		
 		public void action() {
 			switch (step) {
-			case 0:
-				// Envia a cfp (call for proposals) para todos os vendedores
-				passoEnviarCFP();
-
-				break;
-
-			case 1:
-				// Recebe todas as propostas/rejeições dos agentes vendedores
-
-				//TODO analisar respostas recebida
-				passoAnalisarPropostas();
-
-				break;
-
-			case 2:
-				// Recebe resposta do Reputation Agent
-				passoAnalisarProposta();
-
-				break;
-			case 3:
-				//TODO esperando a resposta da tela
-				passoEnviarMensagemDeCompra();
-
-
-				break;
-
-			case 4:
-
-				PassoAvaliarVendedor();
-				break;
+				case 0:
+					passoEnviarCFP();
+					break;
+					
+				case 1:
+					passoAnalisarPropostas();
+					break;
+					
+				case 2:
+					passoAvaliarReputacao();
+					break;
+					
+				case 3:
+					passoEnviarMensagemDeCompra();
+					break;
+	
+				case 4:
+					PassoAvaliarVendedor();
+					break;
+					
+				case 5:
+					removeBehaviour(this);
+					break;
 			}
 
 		}
 
 		private void PassoAvaliarVendedor() {
+			
 			ACLMessage reply = myAgent.receive(mt);
-
+			
 			if (reply != null) {
 
-
-				// Compra realizada
-				System.out.println(targetBookTitle+" foi comprado com sucesso do agente "+reply.getSender().getName());
-
 				ACLMessage informReputation = new ACLMessage();
-
-				Reputation reputation = new Reputation(10, cupomEscolhido.getVendedor());
+				
+				System.out.println(myAgent.getLocalName()+" Avaliando Vendedor "+reply.getSender().getLocalName());
+				
+				Cupom cupom = null;
+				try {
+					cupom = (Cupom) reply.getContentObject();
+				} catch (UnreadableException e) {
+					e.printStackTrace();
+				}
+				Reputation reputation = null;
+				
+				if(cupom != null){
+					reputation = new Reputation(10, reply.getSender());
+					for(Preferencia p : preferencias.values()){
+						if(cupom.getTipoProduto().equalsIgnoreCase(p.getTipo())){
+							preferencias.remove(p.getTipo());
+						}
+					}
+				}else{
+					reputation = new Reputation(0, reply.getSender());
+				}
+				
 				try {
 					informReputation.setContentObject(reputation);
 					informReputation.setPerformative(ACLMessage.INFORM);
@@ -164,12 +169,15 @@ public class AgenteIniciante extends Agent {
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}
-
 				myAgent.doDelete();
 
 
-
-				step = 5;
+				repliesCompra++;
+				
+				if(repliesCompra >= propostasBoas.size()){
+					step = 5;
+				}
+				
 			}
 			else {
 				block();
@@ -178,100 +186,111 @@ public class AgenteIniciante extends Agent {
 
 		private void passoEnviarMensagemDeCompra() {
 			ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+			
+			for(Cupom proposta : propostasBoas.values()){
+				order.addReceiver(proposta.getVendedor());
+				System.out.println(myAgent.getLocalName()+" tentando comprar o cupom "+proposta.getNomeProduto()+" do agente "+proposta.getVendedor().getLocalName());
 
-			order.addReceiver(cupomEscolhido.getVendedor());
-
-			try {
-				order.setContentObject(cupomEscolhido);
-
-				order.setConversationId("venda-cupom");
-
-				order.setReplyWith("order"+System.currentTimeMillis());
-
-				myAgent.send(order);
-				// preparando o template para receber a resposta
-				mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-						MessageTemplate.and(MessageTemplate.MatchConversationId("venda-cupom"),
-								MessageTemplate.MatchInReplyTo(order.getReplyWith())));
-
-				step = 4;
-
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				try {
+					order.setContentObject(proposta);
+	
+					order.setConversationId("venda-cupom");
+	
+					order.setReplyWith("order"+System.currentTimeMillis());
+	
+					myAgent.send(order);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
+			
+			// preparando o template para receber a resposta
+			mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+									 MessageTemplate.MatchConversationId("venda-cupom"));
+
+			step = 4;
 		}
 
 		private void passoAnalisarPropostas() {
 			ACLMessage reply = myAgent.receive(mt);
 
 			if (reply != null) {
-
-				Cupom cupom = null;
+				
+				System.out.println(myAgent.getLocalName()+" Analisando Resposta do Agente "+reply.getSender().getLocalName());
+				
+				List<Cupom> cupons = null;
 
 				try {
-					cupom = (Cupom)reply.getContentObject();
+					cupons = (ArrayList)reply.getContentObject();
 				} catch (UnreadableException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
-				if(cupom != null && avaliarProposta(cupom)){
-
-					propostasBoas.put(cupom.getVendedor(), cupom);
-
-					qtdPropostasPreAceitas++;
-
-					ACLMessage requestReputation = new ACLMessage();
-
-					requestReputation.setPerformative(ACLMessage.REQUEST);
-
-					requestReputation.setContent(reply.getSender().getName());
-
-					requestReputation.addReceiver(agenteDeReputacao);
-
-					requestReputation.setConversationId("informe-de-reputacao");
-
-					requestReputation.setReplyWith("reputation"+System.currentTimeMillis());
-
-					myAgent.send(requestReputation);
-
-					mtReputation = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-							MessageTemplate.MatchConversationId("informe-de-reputacao"));
+				if(cupons != null){
+					for(Cupom cupom : cupons){
+						if(avaliarProposta(cupom)){
+							
+							if(propostasBoas.containsKey(cupom)){
+								propostasBoas.remove(cupom.getTipoProduto());
+							}
+							
+							propostasBoas.put(cupom.getTipoProduto(), cupom);
+		
+							qtdPropostasPreAceitas++;
+		
+							ACLMessage requestReputation = new ACLMessage();
+		
+							requestReputation.setPerformative(ACLMessage.REQUEST);
+		
+							requestReputation.setContent(reply.getSender().getName());
+		
+							requestReputation.addReceiver(agenteDeReputacao);
+		
+							requestReputation.setConversationId("informe-de-reputacao");
+		
+							//requestReputation.setReplyWith("reputation"+System.currentTimeMillis());
+		
+							myAgent.send(requestReputation);
+							
+						}
+					}
 				}
 
 
 				repliesCnt++;
 
-				if (repliesCnt >= agentesVendedores.size()) {
-					//Não há mais vendedores
+				if (repliesCnt >= agentesVendedoresNovos.size()) {
 					step = 2; 
 				}
 			}
 
 			else {
-
 				block();
 			}
 		}
 
 		private void passoEnviarCFP() {
+			if(agentesVendedoresNovos.size() == 0) return;
+			
 			
 			for (Preferencia preferencia : preferencias.values()){
 				
 				ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
 
-				for (int i = 0; i < agentesVendedores.size(); ++i) {
-
-					cfp.addReceiver(agentesVendedores.get(i));
+				for (int i = 0; i < agentesVendedoresNovos.size(); i++) {
+					
+					System.out.println(myAgent.getLocalName()+" Enviando CFP para "+agentesVendedoresNovos.get(i).getLocalName());
+					cfp.addReceiver(agentesVendedoresNovos.get(i));
+					
 				} 
 
+				
 				cfp.setContent(preferencia.getTipo());
 
 				cfp.setConversationId("venda-cupom");
 
-				cfp.setReplyWith("cfp"+System.currentTimeMillis()); // valor unico
+				cfp.setReplyWith("cfp"+System.currentTimeMillis());
 
 				myAgent.send(cfp);
 				
@@ -283,23 +302,22 @@ public class AgenteIniciante extends Agent {
 			step = 1;
 		}
 
-		private void passoAnalisarProposta() {
-			ACLMessage replyReputation = myAgent.receive(mtReputation);
-
-			if(replyReputation != null){
-
-
+		private void passoAvaliarReputacao() {
+			MessageTemplate mtReputationInform = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+					MessageTemplate.MatchConversationId("inform-de-reputacao"));
+			ACLMessage replyInform = myAgent.receive(mtReputationInform);
+			
+			MessageTemplate mtReputationRefuse = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REFUSE),
+					MessageTemplate.MatchConversationId("refuse-de-reputacao"));
+			ACLMessage replyRefuse = myAgent.receive(mtReputationRefuse);
+			
+			if(replyInform != null){
+				
+				System.out.println(myAgent.getLocalName()+" Analisando reputação");
 				try {
+					Reputation reputation = (Reputation) replyInform.getContentObject();
 
-					Reputation reputation = (Reputation) replyReputation.getContentObject();
-
-					float reputationValue = reputation.getReputation();
-
-					Cupom cupom = propostasBoas.get(reputation.getAgent());
-
-					//Logica de calcular melhor cupom e melhor jogador
-					if (!avaliarReputacao(reputation )) {
-						//Remove o cupom do mapa
+					if (!avaliarReputacao(reputation)) {	
 						propostasBoas.remove(reputation.getAgent());
 					}
 				} catch (UnreadableException ex) {
@@ -313,16 +331,20 @@ public class AgenteIniciante extends Agent {
 					step = 3;
 				}
 
+			}else if(replyRefuse != null){
+				repliesReputation++;
+				
+				if(repliesReputation >= qtdPropostasPreAceitas){
+					step = 3;
+				}
 			}else{
 				block();
 			}
 		}
 
+		@Override
 		public boolean done() {
-			if (step == 3) {
-				System.out.println("Falha: "+targetBookTitle+" não encontrado para vender");
-			}
-			return (step == 3 || step == 5);
+			return false;
 		}
 
 		private boolean avaliarReputacao(Reputation reputacao){
@@ -338,9 +360,15 @@ public class AgenteIniciante extends Agent {
 
 			if(cupom != null){
 				Preferencia preferencia = preferencias.get(cupom.getTipoProduto());
-				if(cupom.getPrecoProduto() >= preferencia.getPreco() && !cupom.getData().before(preferencia.getDataDeInicio()) 
+				if(cupom.getPrecoProduto() <= preferencia.getPreco() && !cupom.getData().before(preferencia.getDataDeInicio()) 
 						&& !cupom.getData().after(preferencia.getDataDeFim())){
-					return true;
+					if(propostasBoas.containsKey(cupom.getTipoProduto()) && propostasBoas.get(cupom.getTipoProduto()).getPrecoProduto() > cupom.getPrecoProduto()){
+						return true;
+					}else if (!propostasBoas.containsKey(cupom.getTipoProduto())){
+						return true;
+					}else{
+						return false;
+					}
 				}else{
 					return false;
 				}
@@ -364,18 +392,35 @@ public class AgenteIniciante extends Agent {
 			sd.setType("vendedor-cupons");
 			template.addServices(sd);
 			try {
-				DFAgentDescription[] result = DFService.search(myAgent, template); 
-				System.out.println("Os seguintes vendedores foram encontrados:");
-				agentesVendedores = new ArrayList<AID>();
-				for (int i = 0; i < result.length; ++i) {
+				DFAgentDescription[] result = DFService.search(myAgent, template);
+				
+				List<AID> agentesNovos = new ArrayList<AID>();
+				if(result.length > 0){
+					
+					for(DFAgentDescription agente : result){
+						if(!agentesVendedores.contains(agente.getName())){
+							agentesNovos.add(agente.getName());
+							System.out.println("Agente novo encontrado"+agente.getName().getLocalName());
+						}
+					}
+					
+					
+					myAgent.addBehaviour(new RequestPerformer(myAgent, agentesNovos));
+				}
+				
+				for (int i = 0; i < result.length; i++) {
 					agentesVendedores.add(result[i].getName());
 				}
-
-				myAgent.addBehaviour(new RequestPerformer());
+				
 			}
 			catch (FIPAException fe) {
 				fe.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public void setAgenteDeReputcaoCentralizado(AID name) {
+		this.agenteDeReputacao = name;
 	}
 }

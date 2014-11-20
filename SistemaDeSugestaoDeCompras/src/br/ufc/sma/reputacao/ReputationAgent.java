@@ -63,6 +63,7 @@ public class ReputationAgent extends Agent{
 			ACLMessage msg = myAgent.receive(mt);
 			
 			if(msg != null){
+				System.out.println(myAgent.getLocalName()+" recebeu requisicao de "+msg.getSender().getLocalName());
 				
 				@SuppressWarnings("deprecation")
 				AID idAgent = new AID(msg.getContent());
@@ -78,7 +79,7 @@ public class ReputationAgent extends Agent{
 					quantidadeDeAvaliacoes.put(idAgent,quantidadeDeAvaliacoes.get(idAgent)+1);
 					
 					reply.setPerformative(ACLMessage.INFORM);
-					reply.setConversationId("informe-de-reputacao");
+					reply.setConversationId("inform-de-reputacao");
 					
 					try {
 						
@@ -91,7 +92,7 @@ public class ReputationAgent extends Agent{
 					
 				}else{
 					reply.setPerformative(ACLMessage.REFUSE);
-					
+					reply.setConversationId("refuse-de-reputacao");
 					reply.setContent("not-available");
 				}
 				

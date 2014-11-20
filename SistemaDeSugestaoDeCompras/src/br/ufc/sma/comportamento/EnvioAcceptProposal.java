@@ -38,9 +38,10 @@ public class EnvioAcceptProposal extends CyclicBehaviour {
 				
 				ACLMessage reply = msg.createReply();
 				reply.setPerformative(ACLMessage.INFORM);
+				reply.setConversationId("venda-cupom");
+				System.out.println(agente.cupomExiste(cupom));
 				if(agente.cupomExiste(cupom)){
 					try {
-						
 						agente.comprarCupom(cupom);
 						reply.setContentObject(cupom);
 						myAgent.send(reply);

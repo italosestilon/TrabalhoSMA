@@ -1,11 +1,12 @@
 package br.ufc.sma.comportamento;
 
-import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
 
 import br.ufc.sma.Cupom;
 import br.ufc.sma.contractnet.AgenteParticipante;
@@ -25,16 +26,17 @@ public class RecebimentoDeCFPs extends CyclicBehaviour {
 		ACLMessage mensagemCFP = myAgent.receive(mt);
 	 	if(mensagemCFP != null){
 			
+	 		System.out.println(myAgent.getLocalName()+" recebeu uma mesagem CFP de "+mensagemCFP.getSender().getLocalName());
 			String nomeDoCupom = mensagemCFP.getContent();
-			Cupom cupom = agente.buscarCupom(nomeDoCupom);
+			List<Cupom> cupons = agente.buscarCupons(nomeDoCupom);
 			
 			ACLMessage propose = mensagemCFP.createReply();
 			propose.setConversationId("venda-cupom");
-			if (cupom != null) {
+			if (cupons != null) {
 				propose.setPerformative(ACLMessage.PROPOSE);
 				
 				try {
-					propose.setContentObject(cupom);
+					propose.setContentObject((Serializable) cupons);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

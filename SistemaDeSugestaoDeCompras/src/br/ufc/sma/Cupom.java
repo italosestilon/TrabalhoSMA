@@ -11,11 +11,13 @@ public class Cupom implements Serializable{
 	private Calendar data;
 	private String tipoProduto;
 	private AID vendedor;
+	private int id;
 	
-	public Cupom(String nomeProduto, Double precoProduto, Calendar data, String tipoProduto){
+	public Cupom(String nomeProduto, Double precoProduto, Calendar data, String tipoProduto, int id){
 		this.nomeProduto = nomeProduto;
 		this.precoProduto = precoProduto;
 		this.data = data;
+		this.id = id;
 		this.tipoProduto = tipoProduto;
 	}
 	
@@ -42,4 +44,9 @@ public class Cupom implements Serializable{
 	public AID getVendedor(){
 		return this.vendedor;
 	}
+	
+	public int getId(){
+		return this.id;
+	}
 }
+
