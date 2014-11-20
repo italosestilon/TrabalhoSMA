@@ -72,11 +72,11 @@ public class AgenteIniciante extends Agent implements IAgente{
 	}
 
 	protected void takeDown() {
-		System.out.println("Agente "+getAID().getName()+" já esgotou suas preferências.");
+		System.out.println("Agente "+getAID().getName()+" já esgotou suas preferências e será finalizada.");
 	}
 
 	/*
-	 * Classe interna RequestPerformer.
+	 * Classe interna RequestPerformer. 
 	 * Comportamento usado pelo comprador para encontrar vendedores do livro procurado
 	 */
 	private class RequestPerformer extends Behaviour {
@@ -400,7 +400,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 					for(DFAgentDescription agente : result){
 						if(!agentesVendedores.contains(agente.getName())){
 							agentesNovos.add(agente.getName());
-							System.out.println("Agente novo encontrado"+agente.getName().getLocalName());
+							System.out.println("Agente novo encontrado "+agente.getName().getLocalName());
 						}
 					}
 					

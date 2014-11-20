@@ -1,7 +1,8 @@
 package br.ufc.sma.contractnet;
 
 
-import jade.core.Agent;
+import jade.core.AID;
+import jade.core.Agent; 
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -9,6 +10,8 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import br.ufc.sma.Cupom;
 import br.ufc.sma.comportamento.EnvioAcceptProposal;
@@ -18,22 +21,29 @@ import br.ufc.sma.xml.IBuilderCupom;
 
 public class AgenteParticipante extends Agent{
 	private List<Cupom> cupons;
+	private Map<AID,Cupom> compras;
 	
 	protected void setup(){
+		
 		
 		Object args[] = getArguments();
 		if(args.length > 0){
 			lerCuponsDoXML((String) args[0]);
 		}else{
-			System.out.println("Erro nos parâmetros!");
 			this.doDelete();
 		}
 		
+		compras = new TreeMap<AID,Cupom>();
 		cadastrarNoDF();
 		
 		addBehaviour(new RecebimentoDeCFPs(this));
 		
 		addBehaviour(new EnvioAcceptProposal(this));
+	}
+	
+	@Override
+	protected void takeDown(){
+		System.out.println("Erro nos parâmetros. O agente "+getAID().getLocalName()+" será finalizado");
 	}
 	
 	public List<Cupom> buscarCupons(String nomeDoCupom) {
@@ -63,8 +73,8 @@ public class AgenteParticipante extends Agent{
 		return false;
 	}
 	
-	public void comprarCupom(Cupom cupom){
-		
+	public void comprarCupom(Cupom cupom, AID agente){
+		this.compras.put(agente, cupom);
 	}
 	
 	public void cadastrarNoDF(){
