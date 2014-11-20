@@ -36,9 +36,7 @@ public class AgenteParticipante extends Agent{
 		compras = new TreeMap<AID,Cupom>();
 		cadastrarNoDF();
 		
-		addBehaviour(new RecebimentoDeCFPs(this));
 		
-		addBehaviour(new EnvioAcceptProposal(this));
 	}
 	
 	@Override
@@ -62,6 +60,10 @@ public class AgenteParticipante extends Agent{
 		for(Cupom cupom : cupons){
 			cupom.setVendedor(getAID());
 		}
+		
+		addBehaviour(new RecebimentoDeCFPs(this));
+		
+		addBehaviour(new EnvioAcceptProposal(this));
 	}
 	
 	public boolean cupomExiste(Cupom cupom){

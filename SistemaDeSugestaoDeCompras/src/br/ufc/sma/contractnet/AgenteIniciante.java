@@ -56,13 +56,10 @@ public class AgenteIniciante extends Agent implements IAgente{
 		propostasBoas = new HashMap<String, Cupom>();
 		
 
-		System.out.println("Olá! O agente "+getAID().getName()+" está pronto para buscar cupons.");
+		System.out.println("Olï¿½! O agente "+getAID().getName()+" estï¿½ pronto para buscar cupons.");
 
 	
-		addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));         
-
-		// TickerBehaviour para enviar um request a cada minuto
-		addBehaviour(new BuscarVendedoresDeCupons(this, INTERVALO_BUSCAR_VENDEDOR));
+		
 		
 	}
 
@@ -71,6 +68,11 @@ public class AgenteIniciante extends Agent implements IAgente{
 		IBuiderPeferencia construtor = new BuilderPreferencia(caminhoDoArquivo);
 		
 		preferencias = construtor.getPrefencias();
+		
+		addBehaviour(new ComportamentoBuscarAgenteDeReputacaoCentralizado(this, INTERVALO_BUSCAR_AGENTE_DE_REPUTACAO_CENTRALIZADO));         
+
+		// TickerBehaviour para enviar um request a cada minuto
+		addBehaviour(new BuscarVendedoresDeCupons(this, INTERVALO_BUSCAR_VENDEDOR));
 	}
 	
 	public Collection<Cupom> getCupons(){
@@ -78,7 +80,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 	}
 
 	protected void takeDown() {
-		System.out.println("Agente "+getAID().getName()+" já esgotou suas preferências e será finalizada.");
+		System.out.println("Agente "+getAID().getName()+" jï¿½ esgotou suas preferï¿½ncias e serï¿½ finalizada.");
 	}
 
 	/*
@@ -87,7 +89,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 	 */
 	private class RequestPerformer extends Behaviour {
 		
-		private int repliesCnt = 0; // Número de respostas de vendedores
+		private int repliesCnt = 0; // Nï¿½mero de respostas de vendedores
 		
 		private List<AID> agentesVendedoresNovos; 
 
@@ -156,11 +158,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 				
 				if(cupom != null){
 					reputation = new Reputation(10, reply.getSender());
-					for(Preferencia p : preferencias.values()){
-						if(cupom.getTipoProduto().equalsIgnoreCase(p.getTipo())){
-							preferencias.remove(p.getTipo());
-						}
-					}
+					preferencias.remove(cupom.getTipoProduto());
 				}else{
 					reputation = new Reputation(0, reply.getSender());
 				}
@@ -300,9 +298,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 
 				myAgent.send(cfp);
 				
-				mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE),
-						MessageTemplate.and(MessageTemplate.MatchConversationId("venda-cupom"),
-								MessageTemplate.MatchInReplyTo(cfp.getReplyWith())));
+				mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE), MessageTemplate.MatchConversationId("venda-cupom"));
 			}
 
 			step = 1;
@@ -319,7 +315,7 @@ public class AgenteIniciante extends Agent implements IAgente{
 			
 			if(replyInform != null){
 				
-				System.out.println(myAgent.getLocalName()+" Analisando reputação");
+				System.out.println(myAgent.getLocalName()+" Analisando reputaï¿½ï¿½o");
 				try {
 					Reputation reputation = (Reputation) replyInform.getContentObject();
 

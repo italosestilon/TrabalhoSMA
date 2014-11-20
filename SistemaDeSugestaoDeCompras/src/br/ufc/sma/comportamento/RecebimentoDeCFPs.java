@@ -32,7 +32,7 @@ public class RecebimentoDeCFPs extends CyclicBehaviour {
 			
 			ACLMessage propose = mensagemCFP.createReply();
 			propose.setConversationId("venda-cupom");
-			if (cupons != null) {
+			if (cupons.size() > 0) {
 				propose.setPerformative(ACLMessage.PROPOSE);
 				
 				try {
